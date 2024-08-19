@@ -1,51 +1,55 @@
 package ru.kata.spring.boot_security.demo.dao;
 
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.model.User;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 
-
 @Repository
-@Transactional
 public class UserDaoImpl implements UserDao {
-
     @PersistenceContext
     private EntityManager entityManager;
 
     @Override
-    public List<User> getAllUsers() {
-        return entityManager.createQuery("from User", User.class).getResultList();
-    }
-
-    @Override
-    public User getById(long id) {
-        return entityManager.find(User.class,id);
-    }
-
-    @Override
-    public void saveUser(User user) {
+    public void save(User user) {
         entityManager.persist(user);
     }
 
     @Override
-    public void deleteUser(long id) {
-        User user = entityManager.find(User.class, id);
-        entityManager.remove(user);
+    public void update(User user) {
+        entityManager.merge(user);
     }
 
     @Override
-    public void updateUser(User updatedUser) {
-        entityManager.merge(updatedUser);
+    public void deleteById(Long id) {
+        entityManager.remove(findById(id));
+    }
+
+
+    @Override
+    public User findById(Long id) {
+        return entityManager.find(User.class, id);
     }
 
     @Override
-    public User findByUsername(String email) {
-        return entityManager.createQuery("SELECT user FROM User user WHERE user.email=:email", User.class).setParameter("email", email).getSingleResult();
+    public User findByEmail(String email) {
+        return entityManager.createQuery("select distinct u from User u JOIN FETCH u.roles r WHERE u.email = :email", User.class)
+                .setParameter("email", email)
+                .getResultList().stream().findAny().orElse(null);
     }
 
+    @Override
+    public List<User> findAll() {
+        return entityManager.createQuery("select distinct u from User u join fetch u.roles r", User.class).getResultList();
+    }
+
+    @Override
+    public boolean existsById(Long id) {
+        if (entityManager.find(User.class, id) != null)
+            return true;
+        return false;
+    }
 
 }

@@ -1,57 +1,75 @@
 package ru.kata.spring.boot_security.demo.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.dao.UserDao;
 import ru.kata.spring.boot_security.demo.model.User;
 
 import java.util.List;
 
 
-
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
-
+    private final PasswordEncoder passwordEncoder;
     private final UserDao userDao;
 
-    private final PasswordEncoder passwordEncoder;
-
-
     @Autowired
-    public UserServiceImpl(UserDao userDao, PasswordEncoder passwordEncoder) {
-        this.userDao = userDao;
+    public UserServiceImpl(PasswordEncoder passwordEncoder, UserDao userDao) {
         this.passwordEncoder = passwordEncoder;
+        this.userDao = userDao;
     }
 
     @Override
     public List<User> getAllUsers() {
-        return userDao.getAllUsers();
+        return userDao.findAll();
     }
 
     @Override
-    public void saveUser(User user) {
-        String encryptedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encryptedPassword);
-        userDao.saveUser(user);
+    @Transactional
+    public boolean saveUser(User user) {
+        System.out.println("Pass = " + user.getPassword());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        System.out.println("Pass = " + user.getPassword());
+        if (userDao.findByEmail(user.getEmail()) != null) {
+            return false;
+        }
+        userDao.save(user);
+        return true;
     }
 
     @Override
-    public void deleteUser(long id) {
-        userDao.deleteUser(id);
+    public User getUserById(Long id) {
+        return userDao.findById(id);
     }
 
     @Override
-    public void updateUser(User updatedUser) {
-        String encryptedPassword = passwordEncoder.encode(updatedUser.getPassword());
-        updatedUser.setPassword(encryptedPassword);
-        userDao.updateUser(updatedUser);
+    @Transactional
+    public void deleteUserById(Long id) {
+        userDao.deleteById(id);
     }
 
-
+    @Transactional
     @Override
-    public User getById(long id) {
-        return userDao.getById(id);
+    public UserDetails loadUserByUsername(String username) {
+        return userDao.findByEmail(username);
     }
 
+    @Transactional
+    @Override
+    public void editUser(Long id, User user) {
+        user.setId(id);
+        System.out.println("Pass = " + user.getPassword());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        System.out.println("Pass = " + user.getPassword());
+        userDao.update(user);
+    }
+
+    public boolean existsById(Long id) {
+        return userDao.existsById(id);
+    }
 }
+

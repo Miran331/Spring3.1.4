@@ -8,10 +8,12 @@ import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
 import javax.annotation.PostConstruct;
+import java.util.HashSet;
+import java.util.Set;
 
 @Component
 public class Init {
-
+//сохранение пользователей и ролей
     private final UserService userService;
     private final RoleService roleService;
 
@@ -22,31 +24,23 @@ public class Init {
     }
 
     @PostConstruct
-    private void init() {
-        Role role1 = new Role("ADMIN");
-        Role role2 = new Role("USER");
+    public void createUsersWithRoles() {
+
+        Role role1 = new Role("ROLE_ADMIN");
+        Role role2 = new Role("ROLE_USER");
+
+
         roleService.saveRole(role1);
         roleService.saveRole(role2);
 
+        Set<Role> set1 = new HashSet<>();
+        set1.add(role1);
+        Set<Role> set2 = new HashSet<>();
+                set2.add(role2);
 
-        User user1 = new User();
-        user1.setName("Иван");
-        user1.setSurname("Иванов");
-        user1.setEmail("Test1@mail.ru");
-        user1.setPassword("admin");
-        user1.addRole(role1);
-        user1.addRole(role2);
-
-        User user2 = new User();
-        user2.setName("Петр");
-        user2.setSurname("Петров");
-        user2.setEmail("Test2@mail.ru");
-        user2.setPassword("user");
-        user2.addRole(role2);
-
-
-
-
+        User user1 = new User("Иван", "Иванов", 22,  "Test1@mail.ru", "admin", set1 );
+        User user2 = new User("Петр", "Петров", 33,  "Test2@mail.ru", "user", set2 );
+//сохранение пользователей и ролей
         userService.saveUser(user1);
         userService.saveUser(user2);
 
